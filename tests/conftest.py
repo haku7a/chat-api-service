@@ -1,15 +1,17 @@
 import pytest
-import asyncio
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.db.session import async_session_maker
+from app.db.session import async_session_maker, engine
+from sqlmodel import SQLModel
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+@pytest.fixture(autouse=True)
+async def setup_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
 
 
 @pytest.fixture
