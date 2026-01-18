@@ -31,3 +31,18 @@ async def get_chat(
             status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
         )
     return db_chat
+
+
+@router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_chat(
+    chat_id: int,
+    db: AsyncSession = Depends(get_async_session),
+):
+    db_chat = await db.get(Chat, chat_id)
+    if not db_chat:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found"
+        )
+    await db.delete(db_chat)
+    await db.commit()
+    return None
