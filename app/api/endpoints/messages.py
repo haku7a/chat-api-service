@@ -1,9 +1,12 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.deps import get_async_session
 from app.models import Chat, Message
 from app.schemas import MessageCreate, MessageRead
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -25,4 +28,5 @@ async def create_message(
     db.add(db_message)
     await db.commit()
     await db.refresh(db_message)
+    logger.info(f"New message added to chat {chat_id}")
     return db_message

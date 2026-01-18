@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -6,6 +7,8 @@ from sqlmodel import select
 from app.api.deps import get_async_session
 from app.schemas import ChatRead, ChatCreate, ChatWithMessages
 from app.models import Chat, Message
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,6 +22,7 @@ async def create_chat(
     db.add(db_chat)
     await db.commit()
     await db.refresh(db_chat)
+    logger.info(f"Created new chat: ID {db_chat.id}, Title: {db_chat.title}")
     return db_chat
 
 
@@ -63,4 +67,5 @@ async def delete_chat(
         )
     await db.delete(db_chat)
     await db.commit()
+    logger.info(f"Chat {chat_id} and all its messages deleted")
     return None
