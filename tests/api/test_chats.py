@@ -51,3 +51,26 @@ async def test_delete_chat_api_logic():
 
         assert re_delete_res.status_code == status.HTTP_404_NOT_FOUND
         assert re_delete_res.json()["detail"] == "Chat not found"
+
+
+async def test_get_chat_with_messages_pagination():
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        chat_res = await ac.post("/chats/", json={"title": "Pagination Chat"})
+        chat_id = chat_res.json()["id"]
+
+        for i in range(10):
+            await ac.post(f"/chats/{chat_id}/messages/", json={"text": f"Msg {i}"})
+
+        response_limit = await ac.get(f"/chats/{chat_id}?limit=5")
+        assert response_limit.status_code == status.HTTP_200_OK
+        data = response_limit.json()
+
+        assert "messages" in data
+        assert len(data["messages"]) == 5
+        assert data["messages"][-1]["text"] == "Msg 9"
+        assert data["messages"][0]["text"] == "Msg 5"
+
+        response_default = await ac.get(f"/chats/{chat_id}")
+        assert len(response_default.json()["messages"]) == 10
